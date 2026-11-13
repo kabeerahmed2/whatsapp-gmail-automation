@@ -1,0 +1,641 @@
+{
+  "name": "Kabeer Food Court - Multi-Intent WhatsApp Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "whatsapp-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cb5bb93f-f63c-4d5d-8e83-2cbf4110badf",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        864
+      ],
+      "webhookId": "whatsapp-agent-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-is-get",
+              "leftValue": "={{ $json.headers['x-forwarded-method'] || $req.method || 'POST' }}",
+              "rightValue": "GET",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "579a3f16-a292-4dc8-850c-3d450b472725",
+      "name": "Check Request Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1008,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.verify_token'] === 'Sairaaziz034@' ? $json.query['hub.challenge'] : 'Forbidden' }}",
+        "options": {
+          "responseCode": "={{ $json.query['hub.verify_token'] === 'Sairaaziz034@' ? 200 : 403 }}"
+        }
+      },
+      "id": "a0dcf979-1223-43eb-89e9-7e3765ffd94d",
+      "name": "Meta Webhook Verification",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"message\": \"Webhook received successfully\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a0572108-f0e7-4c86-b22e-c15d33ab1747",
+      "name": "Respond 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.entry[0].changes[0].value.messages[0].text.body }}",
+                    "rightValue": "(menu|items|list|prices|rate|dishes|card|food list|khana|pakwan|inventory)",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "5d96fac0-2f47-4109-8be1-af60f65a28cc"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Menu Request"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.entry[0].changes[0].value.messages[0].text.body }}",
+                    "rightValue": "(order|buy|cart|checkout|delivery|place order|mangalwa|chahiye|khareedna|deal)",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "8dc8cfee-4e68-4ac7-bb2e-0575ee543575"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Food Ordering"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": true
+        }
+      },
+      "id": "2ad6e8c4-0404-4bd4-9f3b-fd9b452436ec",
+      "name": "Intent Router (Switch)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -464,
+        1088
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY",
+          "mode": "list",
+          "cachedResultName": "Kabeer Food Court",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1202281232,
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY/edit#gid=1202281232"
+        },
+        "options": {}
+      },
+      "id": "56444ecc-351c-44e5-a5b0-32ddb21a0bbe",
+      "name": "Get Menu from Google Sheets (Inventory)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -112,
+        752
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kfFLPwvu8tArhf1j",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format rows fetched from Inventory sheet into a clean WhatsApp Markdown message\nconst items = $input.all();\n\nif (!items || items.length === 0) {\n  return [{\n    json: {\n      output: \"🍔 *KABEER FOOD COURT MENU* 🍕\\n\\nOur menu is currently updating. Please check back in a few minutes or send us your query!\"\n    }\n  }];\n}\n\n// Group by category\nconst categorized = {};\nitems.forEach(item => {\n  const row = item.json;\n  const cat = row.Category || row.category || 'Specialties';\n  if (!categorized[cat]) categorized[cat] = [];\n  categorized[cat].push(row);\n});\n\nlet menuText = \"🍔 *WELCOME TO KABEER FOOD COURT MENU* 🍕\\n\";\nmenuText += \"📍 Karachi, Pakistan | ⏰ 12:00 PM - 2:00 AM\\n\";\nmenuText += \"━━━━━━━━━━━━━━━━━━━━━━\\n\\n\";\n\nfor (const [cat, catItems] of Object.entries(categorized)) {\n  menuText += `📌 *${cat.toUpperCase()}*\\n`;\n  catItems.forEach(i => {\n    const name = i['Dish Name'] || i['Item Name'] || i.Item || i.name || 'Delicious Item';\n    const price = i['Price (PKR)'] || i.Price || i.price || 'N/A';\n    const avail = i.Availability || i.Status || i.status || 'Available';\n    const stockIcon = (avail.toLowerCase().includes('out') || avail.toLowerCase().includes('no')) ? '❌ [Out of Stock]' : '✅';\n    \n    menuText += `• *${name}* - *PKR ${price}* ${stockIcon}\\n`;\n  });\n  menuText += \"\\n\";\n}\n\nmenuText += \"━━━━━━━━━━━━━━━━━━━━━━\\n\";\nmenuText += \"🛒 *To place an order*, simply reply with your item choices & delivery address!\\n\";\nmenuText += \"💡 Example: _I want to order 2 Zinger Burgers and 1 Cold Drink to Gulshan Block 5._\";\n\nreturn [{\n  json: {\n    output: menuText\n  }\n}];"
+      },
+      "id": "1ea5a12d-17c6-431d-adc6-2325db16e378",
+      "name": "Format Menu Markdown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Certified order-taking assistant for Kabeer Food Court in Karachi. You must fetch and read data directly from the restaurant's existing Google Sheets data file (Inventory sheet for items, categories, and Price (PKR)). Calculate order totals accurately, collect customer delivery details (Name, Phone No., Address), generate an Order No., and use the Google Sheets 'Append Row' tool to log the final order into the Orders sheet (Order No., Date, Customer Name, Phone No., Address, Items Ordered, Quantity, Total Amount, Order Status, Notes). Confirm the order clearly back to the user."
+        }
+      },
+      "id": "044a1cbf-4a58-42d0-b108-ec4449f9bed5",
+      "name": "Gemini Order AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -176,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "40cec646-5ab0-4679-90cd-b46e7b65bab5",
+      "name": "Google Gemini (Order Model)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1184
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Omol7yecRFMvbWq9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('WhatsApp Webhook').item.json.body.entry[0].changes[0].value.messages[0].from }}",
+        "contextWindowLength": 10
+      },
+      "id": "e145ff30-54c7-4355-bdfa-b1ced581a240",
+      "name": "Order Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7c9141dd-8a7b-41a7-be70-60955369f991",
+      "name": "Gemini General Query AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -176,
+        1456
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "cfd4ae2e-02be-4ffc-a2e2-c08dd8461a88",
+      "name": "Google Gemini (Query Model)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        1680
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Omol7yecRFMvbWq9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WhatsApp Webhook').item.json.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from || 'test_session' }}",
+        "contextWindowLength": 10
+      },
+      "id": "bada8d47-6b2f-4aa3-b233-8599fd9e7d84",
+      "name": "Query Simple Window Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -112,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Webhook').item.json.body.entry[0].changes[0].value.messages[0].from }}"
+      },
+      "id": "f6152e0a-cb93-484f-9b95-2f5ffc56bfb9",
+      "name": "WhatsApp Send (Menu Response)",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        448,
+        752
+      ],
+      "webhookId": "52c03d21-05e0-4d37-a482-11bd249ca50e",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "NizneKjPoGl46fnt",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1107668219104737",
+        "recipientPhoneNumber": "={{ $('WhatsApp Webhook').item.json.body.entry[0].changes[0].value.messages[0].from }}",
+        "textBody": "hello",
+        "additionalFields": {}
+      },
+      "id": "199e71a2-f6ae-471e-8613-c11cd3bd13ad",
+      "name": "WhatsApp Send (Order Confirmation)",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        224,
+        1056
+      ],
+      "webhookId": "7d2ad5bb-5e3b-4e23-b187-047cff6770ed",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "NizneKjPoGl46fnt",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Webhook').item.json.body.entry[0].changes[0].value.messages[0].from }}"
+      },
+      "id": "45b8649b-1c4f-4f61-822c-1074933c7339",
+      "name": "WhatsApp Send (FAQ Reply)",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        224,
+        1456
+      ],
+      "webhookId": "025d8b7c-d404-43b8-8bb1-95a8accaec84",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "NizneKjPoGl46fnt",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY",
+          "mode": "list",
+          "cachedResultName": "Kabeer Food Court",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1469652043,
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY/edit#gid=1469652043"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        1680
+      ],
+      "id": "0f6e5998-0c1b-4bb0-a925-5089464c765f",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kfFLPwvu8tArhf1j",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY",
+          "mode": "list",
+          "cachedResultName": "Kabeer Food Court",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 95283039,
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y8TnhPnHiacnhEkj2C1SyK7guP5RZhjsvnLM9mpLAaY/edit#gid=95283039"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        16,
+        1184
+      ],
+      "id": "8f774e23-dcc4-4082-beae-c5e750c312fe",
+      "name": "Get row(s) in sheet in Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kfFLPwvu8tArhf1j",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -736,
+        1200
+      ],
+      "id": "e2aab042-c303-46a2-8738-4ae6f3c7988d",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Request Method",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Request Method": {
+      "main": [
+        [
+          {
+            "node": "Meta Webhook Verification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Intent Router (Switch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router (Switch)": {
+      "main": [
+        [
+          {
+            "node": "Get Menu from Google Sheets (Inventory)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gemini Order AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gemini General Query AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Menu from Google Sheets (Inventory)": {
+      "main": [
+        [
+          {
+            "node": "Format Menu Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Menu Markdown": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send (Menu Response)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Order AI Agent": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send (Order Confirmation)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini General Query AI Agent": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send (FAQ Reply)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini (Order Model)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini Order AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Gemini Order AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini (Query Model)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini General Query AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Simple Window Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Gemini General Query AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "Gemini General Query AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Gemini Order AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2abd99ff-62c2-46dd-b76a-722bca82537d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "99834bcee89d19b569cbb685c1271dd4c463ae92e1c378acb99acfaea2b4ff81"
+  },
+  "nodeGroups": [],
+  "id": "FhbSHkYxcR3wTj2A",
+  "tags": []
+}
